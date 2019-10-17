@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+</head>
+<body>
+  <style>
+    #chat {
+      width: 650px;
+      margin: 0 auto;
+      background: #f9f9f9;
+      border: 1px solid #ddd;
+    }
+    .render-img img {
+      max-width: 300px;
+    }
+    .chat-view {
+      height: 500px;
+      border-bottom: 1px solid #ddd;
+      overflow: auto;
+    }
+    .chat-input {
+      display: block;
+      height: 200px;
+      width: 100%;
+      border: 1px solid #ddd;
+      background: #f9f9f9;
+      position: relative;
+    }
+    .chat-op-slider {
+      display: flex;
+      height: 30px;
+    }
+    .chat-upload, .chat-remove {
+      position: relative;
+      overflow: hidden;
+      height: 30px;
+      line-height: 30px;
+      text-align: center;
+      width: 30px;
+      margin: 0 10px;
+    }
+
+    .chat-remove {
+      font-size: 12px;
+      width: 5em;
+      cursor: pointer;
+    }
+    .input-file {
+      position: absolute;
+      width: 500px;
+      height: 500px;
+      top: 0;
+      left: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+    * {
+      box-sizing: border-box;
+    }
+
+    .time-line {
+      text-align: center;
+      color: #ddd;
+      font-size: 12px;
+    }
+  </style>
+  <div id="chat">
+    <div class="chat-view">
+      <div v-for="item in msgQueue" :key="item.createAt" class="item">
+        <div class="time-line">{{ item.createAt }}</div>
+        <component :is="RENDER_STRATS[item.type]" :source="item"></component>
+      </div>
+    </div>
+    <div class="chat-op">
+      <div class="chat-op-slider">
+        <div class="chat-upload">
+          +
+          <input @change="handleSendImage" class="input-file" type="file">
+        </div>
+        <div @click="handleRemoveMsg" class="chat-remove">撤销最近</div>
+      </div>
+      <textarea @keydown.enter="handleSendText" v-model="input" class="chat-input">
+      </textarea>
+    </div>
+  </div>
+
+  <script src="https://cdn.bootcss.com/vue/2.6.10/vue.min.js"></script>
+  <script>
+    const RENDER_STRATS = {
+      text: 'render-text',
+      image: 'render-img',
+      system: 'render-system'
+    }
+
+    new Vue({
+      el: '#chat',
+      data() {
+        return {
+          RENDER_STRATS,
+          input: '',
+          msgQueue: [] // enum type [text, image, system]
+        }
+      },
+      methods: {
+        handleSendText(e) {
+          console.log(this.input)
+          if (this.input) {
+            e.preventDefault()
+            this.handlePushMsg({
+              type: 'text',
+              val: this.input
+            })
+            this.input = ''
+          }
+        },
+        handlePushMsg(source) {
+          this.msgQueue.push({
+            ...source,
+            createAt: (new Date()).toLocaleString()
+          })
+        },
+        handleSendImage(e) {
+          const img = e.target.files[0]
+          const src = URL.createObjectURL(img)
+          this.handlePushMsg({
+            type: 'image',
+            val: src
+          })
+        },
+        handleRemoveMsg() {
+          for (let i = this.msgQueue.length - 1; i >= 0; i--) {
+            const node = this.msgQueue[i]
+            if (node.type !== 'system') {
+              console.log(node.type)
+              return this.msgQueue.splice(i, 1, {
+                type: 'system',
+                val: '已撤销',
+                createAt: (new Date()).toLocaleString()
+              })
+            }
+          }
+        }
+      }
+    })
+
+    Vue.component('render-text', {
+      props: {
+        source: Object
+      },
+      template: '<div class="text">{{this.source.val}}</div>'
+    })
+
+    Vue.component('render-img', {
+      props: {
+        source: Object
+      },
+      template: `
+        <div class="render-img">
+          <img :src="source.val" @load="invokeURL" />
+        </div>
+      `,
+      methods: {
+        invokeURL() {
+          URL.revokeObjectURL(this.source.val)
+        }
+      }
+    })
+
+    Vue.component('render-system', {
+      props: {
+        source: Object
+      },
+      template: '<div class="render-system">{{ source.val }}</div>'
+    })
+  </script>
+</body>
+</html>
