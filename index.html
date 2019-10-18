@@ -2,20 +2,23 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport"
+	      content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <link rel="stylesheet" href="https://cdn.bootcss.com/normalize/8.0.1/normalize.css">
   <title>Document</title>
 </head>
 <body>
   <style>
     #chat {
-      width: 650px;
+      width: 100%;
       margin: 0 auto;
       background: #f9f9f9;
       border: 1px solid #ddd;
     }
     .render-img img {
-      max-width: 300px;
+      max-width: 100px;
+      max-height: 400px;
     }
     .chat-view {
       height: 500px;
@@ -64,15 +67,48 @@
 
     .time-line {
       text-align: center;
-      color: #ddd;
+      color: #333;
       font-size: 12px;
+      margin: 10px 0;
+    }
+
+    .item-content {
+      display: flex;
+      justify-content: flex-end;
+      font-size: 13px;
+    }
+
+    .render-text, .render-img {
+      padding: 6px 6px;
+      border-radius: 10px;
+      background: #9ae766;
+      position: relative;
+      margin-right: 10px;
+    }
+
+    .render-text::after, .render-img::after {
+      content: '';
+      display: block;
+      border: 4px solid #9ae766;
+      border-color: transparent transparent transparent #9ae766;
+      position: absolute;
+      right: -8px;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+
+    .render-system {
+      width: 100%;
+      text-align: center;
     }
   </style>
   <div id="chat">
     <div class="chat-view">
       <div v-for="item in msgQueue" :key="item.createAt" class="item">
         <div class="time-line">{{ item.createAt }}</div>
-        <component :is="RENDER_STRATS[item.type]" :source="item"></component>
+        <div class="item-content">
+          <component :is="RENDER_STRATS[item.type]" :source="item"></component>
+        </div>
       </div>
     </div>
     <div class="chat-op">
@@ -151,7 +187,7 @@
       props: {
         source: Object
       },
-      template: '<div class="text">{{this.source.val}}</div>'
+      template: '<div class="render-text">{{this.source.val}}</div>'
     })
 
     Vue.component('render-img', {
